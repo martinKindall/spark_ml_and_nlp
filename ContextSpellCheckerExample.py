@@ -1,7 +1,9 @@
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import concat_ws
 from sparknlp.annotator import RecursiveTokenizer, ContextSpellCheckerModel
 from sparknlp.base import *
 from pyspark.ml import Pipeline
+from pyspark.sql.functions import col
 
 
 def init_spark():
@@ -35,8 +37,9 @@ def main():
     pipeline = spellCheckerPipeline(spellModel)
     fittedPipeline = pipeline.fit(empty_ds)
 
-    applyModelToTweetsAndShowResult(fittedPipeline, tweetsDf)
+    applyModelToTweetsShowResultAndWrite(fittedPipeline, tweetsDf)
 
+    '''
     lp = LightPipeline(fittedPipeline)
 
     showExampleOfSpellChecker(lp)
@@ -44,6 +47,7 @@ def main():
 
     print(spellModel.getTradeoff())  # this is a hyperparam that can be tuned to balance
                                      # context information and word/subword information.
+    '''
 
 
 def spellCheckerPipeline(spellModel):
@@ -69,9 +73,17 @@ def spellCheckerPipeline(spellModel):
     return pipeline
 
 
-def applyModelToTweetsAndShowResult(fittedPipeline, tweetsDf):
+def applyModelToTweetsShowResultAndWrite(fittedPipeline, tweetsDf):
     result = fittedPipeline.transform(tweetsDf)
     result.show()
+    result.printSchema()
+    # result.toPandas().to_csv('revised_tweets.csv')
+    result \
+        .withColumn("finished_checked_joined", concat_ws(" ", col("finished_checked"))) \
+        .select("text", "finished_checked_joined") \
+        .coalesce(1) \
+        .write \
+        .csv("myfile.csv")
 
 
 def showExampleOfSpellChecker(lp):
