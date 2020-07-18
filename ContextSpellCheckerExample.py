@@ -24,15 +24,26 @@ def main():
               header="true", charset="UTF-8") \
         .select("text")
 
+    empty_ds = spark.createDataFrame([[""]]).toDF("text")
+
     spellModel = ContextSpellCheckerModel \
         .pretrained() \
         .setInputCols("token") \
         .setOutputCol("checked")
+    spellModel.updateVocabClass('_NAME_', ['Monika', 'Agnieszka', 'Inga', 'Jowita', 'Melania'], True)
 
     pipeline = spellCheckerPipeline(spellModel)
-    lp = LightPipeline(pipeline.fit(tweetsDf))
-    print(lp.annotate("Plaese alliow me tao introdduce myhelf, I am a man of waelth und tiaste"))
-    print(spellModel.getWordClasses())
+    fittedPipeline = pipeline.fit(empty_ds)
+
+    applyModelToTweetsAndShowResult(fittedPipeline, tweetsDf)
+
+    lp = LightPipeline(fittedPipeline)
+
+    showExampleOfSpellChecker(lp)
+    showExampleOfNameCheckingAndWordClasses(spellModel, lp)
+
+    print(spellModel.getTradeoff())  # this is a hyperparam that can be tuned to balance
+                                     # context information and word/subword information.
 
 
 def spellCheckerPipeline(spellModel):
@@ -56,6 +67,21 @@ def spellCheckerPipeline(spellModel):
     ])
 
     return pipeline
+
+
+def applyModelToTweetsAndShowResult(fittedPipeline, tweetsDf):
+    result = fittedPipeline.transform(tweetsDf)
+    result.show()
+
+
+def showExampleOfSpellChecker(lp):
+    print(lp.annotate("Plaese alliow me tao introdduce myhelf, I am a man of waelth und tiaste"))
+
+
+def showExampleOfNameCheckingAndWordClasses(spellModel, lp):
+    print(spellModel.getWordClasses())
+    foreignNameExample = 'We are going to meet Jowita at the city hall.'
+    print(lp.annotate(foreignNameExample))
 
 
 if __name__ == '__main__':
