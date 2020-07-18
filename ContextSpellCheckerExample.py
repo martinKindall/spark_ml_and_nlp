@@ -24,12 +24,18 @@ def main():
               header="true", charset="UTF-8") \
         .select("text")
 
-    pipeline = spellCheckerPipeline()
+    spellModel = ContextSpellCheckerModel \
+        .pretrained() \
+        .setInputCols("token") \
+        .setOutputCol("checked")
+
+    pipeline = spellCheckerPipeline(spellModel)
     lp = LightPipeline(pipeline.fit(tweetsDf))
     print(lp.annotate("Plaese alliow me tao introdduce myhelf, I am a man of waelth und tiaste"))
+    print(spellModel.getWordClasses())
 
 
-def spellCheckerPipeline():
+def spellCheckerPipeline(spellModel):
     documentAssembler = DocumentAssembler() \
         .setInputCol("text") \
         .setOutputCol("document")
@@ -38,10 +44,7 @@ def spellCheckerPipeline():
         .setOutputCol("token") \
         .setPrefixes(["\"", "(", "[", "\n"]) \
         .setSuffixes([".", ", ", "?", ")", "!", "‘s"])
-    spellModel = ContextSpellCheckerModel \
-        .pretrained() \
-        .setInputCols("token") \
-        .setOutputCol("checked")
+
     finisher = Finisher() \
         .setInputCols("checked")
 
