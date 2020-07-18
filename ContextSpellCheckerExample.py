@@ -25,7 +25,8 @@ def main():
         .select("text")
 
     pipeline = spellCheckerPipeline()
-    pipelineModel = pipeline.fit(tweetsDf)
+    lp = LightPipeline(pipeline.fit(tweetsDf))
+    print(lp.annotate("Plaese alliow me tao introdduce myhelf, I am a man of waelth und tiaste"))
 
 
 def spellCheckerPipeline():
