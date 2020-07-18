@@ -1,5 +1,6 @@
 from pyspark.sql import SparkSession
 from sparknlp.base import *
+import pyspark.sql.functions as F
 
 
 def init_spark():
@@ -26,7 +27,12 @@ def main():
         .select("text")
 
     doc_df = documentAssembler.transform(tweetsDf)
-    doc_df.show()
+    # print(doc_df.select("document.result").take(1))
+    doc_df.withColumn(
+        "tmp",
+        F.explode("document")) \
+        .select("tmp.*"). \
+        show()
 
 
 if __name__ == '__main__':
