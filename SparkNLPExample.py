@@ -16,10 +16,6 @@ def init_spark():
 def main():
     spark, sc = init_spark()
 
-    df = spark.read \
-        .load("C:\\sparkTmp\\tweets.csv",
-              format="csv", sep=",", inferSchema="true", header="true", charset="UTF-8")
-
     # Download a pre-trained pipeline
     pipeline = PretrainedPipeline('explain_document_dl', lang='en')
 
