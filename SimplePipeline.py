@@ -2,6 +2,7 @@ from pyspark.sql import SparkSession
 from sparknlp.annotator import SentenceDetector, Tokenizer, Normalizer, WordEmbeddingsModel
 from sparknlp.base import *
 from pyspark.ml import Pipeline
+from sparknlp.base import LightPipeline
 
 
 def init_spark():
@@ -26,8 +27,11 @@ def main():
 
     pipeline = simplePipeline()
     pipelineModel = pipeline.fit(tweetsDf)
-    result = pipelineModel.transform(tweetsDf)
-    result.show()
+    # result = pipelineModel.transform(tweetsDf)
+    # result.show()
+
+    lightModel = LightPipeline(pipelineModel, parse_embeddings=True)
+    print(lightModel.annotate("How did serfdom develop in and then leave Russia ?"))
 
 
 def simplePipeline():
