@@ -1,6 +1,9 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, isnull, when, count
 from pyspark.ml.feature import StringIndexer
+from pyspark.ml.feature import VectorAssembler
+from pyspark.ml.classification import RandomForestClassifier
+from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 
 
 def init_spark():
@@ -68,6 +71,40 @@ def main():
     dataset = dataset.drop("Embarked")
 
     dataset.show()
+
+    required_features = [
+        "Pclass",
+        "Age",
+        "Fare",
+        "Gender",
+        "Boarded"
+    ]
+
+    assembler = VectorAssembler(
+        inputCols=required_features,
+        outputCol='features'
+    )
+
+    transformed_data = assembler.transform(dataset)
+    transformed_data.show()
+
+    (training_data, test_data) = transformed_data.randomSplit([0.8, 0.2])
+    rf = RandomForestClassifier(
+        labelCol="Survived",
+        featuresCol="features",
+        maxDepth=5
+    )
+    model = rf.fit(training_data)
+    predictions = model.transform(test_data)
+
+    evaluator = MulticlassClassificationEvaluator(
+        labelCol="Survived",
+        predictionCol="prediction",
+        metricName="accuracy"
+    )
+
+    accuracy = evaluator.evaluate(predictions)
+    print("Test Accuracy = ", accuracy)
 
 
 if __name__ == '__main__':
